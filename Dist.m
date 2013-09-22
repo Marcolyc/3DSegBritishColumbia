@@ -12,8 +12,15 @@ A2 = vertex(face(:,2));
 A3 = vertex(face(:,3));
 %store the area in Matrix every row is a face's area
 Area = triangleArea3d(A1,A2,A3);
+%compute Normal and centroid to get lines
+normals = faceNormal( vertex,face );
+centroids = faceCentroids( vertex,face );
+lines = createLine3d( centroids , normals(:,1) , normals(:,2), normals(:,3));
+[points pos faceInds] = intersectLineMesh3d(lines,vertex,face);
 
-disMatrix = zeros(numFace,1);
+distMatrix = points - centroids(faceInds); %get the number $faceInds centroids 
+                                                               % and compute the distance
+distance = sum(distMatrix * Area)/sum(Area);
 
 
 
