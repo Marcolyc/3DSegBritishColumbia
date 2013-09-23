@@ -10,7 +10,9 @@ neighbor = getNeighbor(face) ;% c function 3*numFace
 %build the initial Matrix then merge them
 label=zeros(length(neighbor),1);
 for i=1:length(neighbor)
-    label(i) = i;
+    if(face(i)==0)
+        label(i) = i;
+    end
 end
 
 stop=true;
