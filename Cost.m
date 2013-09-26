@@ -7,10 +7,10 @@ function costvalue = Cost(face,vertex,hull,alpha,v)
 % alpha is a para to control the Costvalue
 % Liyangchun <phantomlyc@gmail.com>
 
-%compute the distance
-distance = Dist(face,vertex,hull);
 %compute the centroids
 [compact centroids] = Comp(hull,vertex,v);
+%compute the distance
+distance = Dist(face,vertex,hull,centroids);
 
 % cost function
 costvalue = (1+distance)*(1+compact)^alpha; 

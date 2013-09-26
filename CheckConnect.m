@@ -1,9 +1,9 @@
-function [label] = CheckConnect(face,seginfo)
+function [label] = CheckConnect(face,seginfo,verbose)
 % CheckConnect check which faces are connected with seginfo=0 (which means unassigned)
 % and return a matrix called label which stores the label of vertex (label(i) stores face(i) belong to which label)
 % Li Yangchun <phantomlyc@gmail.com>
 
-
+tmp_tic = tic;
 %first find  assigned faces and set their label = 0
 face(:,find(seginfo ~= 0))=0;
 neighbor = getNeighbor(face) ;% c function 3*numFace
@@ -35,6 +35,11 @@ Ulabel = unique(label); %find how many parts
  for i=1:length(Ulabel)
     label(find(label==Ulabel(i)))=i;
 end %make parts range from 1 to numParts
+
+if verbose
+    tmp_toc = toc(tmp_tic);
+    fprintf('Done Finding Connected Areas: %.2fs\n',tmp_toc);
+end
 
 
     
