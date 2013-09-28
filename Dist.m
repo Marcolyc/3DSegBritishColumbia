@@ -3,7 +3,6 @@ function distance = Dist(face,vertex,hull,centroids)
 % this function computes metric dist
 % given a group of triangles compute dist(p,C(p)) 
 % Li Yangchun <phantomlyc@gmail.com>
-tmp_tic = tic;
 
 numFace = size(face,1);
 
@@ -28,14 +27,13 @@ box = boundingBox3d(vertex);
 diagnol = sqrt((box(2)-box(1))^2+(box(4)-box(3))^2+(box(6)-box(5))^2);
 
 %compute distance
-distMatrix = sqrt(sum((points - centroids(faceInds)).^2,2)); 
-distMatrix = distMatrix.^0.5 ./diagnol;									   														
+distMatrix = sqrt(sum((points - centroids(faceInds,:)).^2,2)); 
+distMatrix = distMatrix./diagnol;									   														
 
 distance = sum(distMatrix .* Area)/sum(Area);
 
-if verbose
-    tmp_toc = toc(tmp_tic);
-    fprintf('Computing Dist using time: %.2fs\n',tmp_toc);
-end
+
+
+
 
 

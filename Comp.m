@@ -1,11 +1,9 @@
-function [compactness centroid] = Comp(hull,vertex,v)
+function compactness= Comp(hull,vertex,v,centroid)
 %This function calculates a convexHull's compactness
 %input:vertex in 3*num store vertex's cordinates
 %  
 %output : area(C)/volume(C)^(2/3)                     
 % Li Yangchun <phantomlyc@gmail.com>
-
-centroid = faceCentroids(vertex,hull); %get the centroid of convexhull
 
 %Matrix of three vertices of one triangle in hull
 A1=vertex(hull(:,1),:); 

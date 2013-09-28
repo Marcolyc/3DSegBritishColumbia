@@ -2,6 +2,7 @@ function centroids = ConvCentroids (vertex,hull)
 % Compute the centroids of a given convexhull
 % with its vertex and triangle faces(hull)
 % based on face-area weight average
+tmp_tic = tic;
 
 numV = length(vertex);
 
@@ -20,3 +21,7 @@ end
 
 centroids = mean(faceCenter);
 
+tmp_toc = toc(tmp_tic);
+fprintf('Computing Centroids using time: %.2fs\n',tmp_toc);
+
+%0.28s

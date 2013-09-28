@@ -1,4 +1,4 @@
-function costvalue = Cost(face,vertex,hull,alpha,v)
+function costvalue = Cost(face,vertex,hull,alpha,v,centroids)
 % Cost is a function to compute the cost
 % of a potential patch
 % by using the functions of Dist.m and Comp.m
@@ -8,7 +8,7 @@ function costvalue = Cost(face,vertex,hull,alpha,v)
 % Liyangchun <phantomlyc@gmail.com>
 
 %compute the centroids
-[compact centroids] = Comp(hull,vertex,v);
+compact = Comp(hull,vertex,v,centroids);
 %compute the distance
 distance = Dist(face,vertex,hull,centroids);
 
