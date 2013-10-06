@@ -20,6 +20,7 @@ terminate = true;
 patchVertexId = {}; %to store the vertex belong to a potential patch
 patchVertex = {}; % to store the cordinate
 TriId = {}; % to store the face Id for growing
+patchhull = {}; %to store the convexhull's face
 
 patchVertexIdOld = {}; %used to check if convergence
 patchVertexOld = {};
@@ -27,28 +28,42 @@ TriIdOld = {};
 
 
 while (terminate == true)
-    %step1
-    label = CheckConnect(face,segInfo,1);
-	%init the seed Matrix
-	labelNum = length(unique(label(:,:)));
-	segNum = length(unique(segInfo(:,:)))-1; %except 0
+    %step1 find potential patch
+    segInfo = CheckConnect(face,segInfo,neighbor,1);
+	segNum = length(unique(segInfo(:,:))); %except 0
 
 	while(true)
 	    faceId = {}; %to store which faces belong to a Potential patch	
 	    %step2 find seeds for existed and potential patch
 	    for j = 1:segNum
-	        faceId{j} = find(segInfo == j); %get the patch ID in face
-		    tmpF = face(: , find(segInfo == j));
-		    tmpV = vertex(: , unique(tmpF(:,:)));
-		    [hull tmpVolume] = convhulln(tmpV);
+	        faceId{j} = find(segInfo == j);       %get the patch ID in face
+		    tmpF = face(find(segInfo == j),:);  %find which faces(3*faces)
+		    tmpV = vertex(unique(tmpF(:,:)),:); %include which vertices
+		    hull = convhulln(tmpV);
+			patchhull{j} = hull ;
+			
 	        convCentroids = ConvCentroids (tmpV,hull);%get the centroid of convexhull
 			centroid = faceCentroids(vertex,hull); 
 		    
+			VolumeMatrix = zeros(length(tmpF),1);
+			vertexMatrix = {}; % potential seeds convexhull's vertex 
+			for k = 1:length(tmpF)
+			    vertexMatrix{k} = [vertex(tmpF(k,:),:);convCentroids];
+			end
+			
+			hullMatrix = {}; %potential seeds hull
+			for k = 1:length(tmpF)
+			    [tmphull tmpVolume] = convhulln(faceMatrix{k});
+				hullMatrix{k} = tmphull;
+				VolumeMatrix(k) = tmpVolume;
+			end
+			
 			%init the cost Matrix
 	        costMatrix = inf(length(tmpF),1);
 	        %compute the costMatrix
 	        for i = 1:length(costMatrix)
-	            costMatrix(i) = Cost(tmpF(i,:),tmpV,hull,alpha,tmpVolume,centroid);
+	            costMatrix(i) = Cost(tmpF(i,:),tmpV,vertexMatrix{i}...
+				,hullMatrix{i},hull,alpha,VolumeMatrix(i),centroid);
 	        end
 	        %find the seed Triangle seedTri is the index
             seedTriIndex = find(costMatrix == min(costMatrix));%get the indices of tmpF 
@@ -65,49 +80,21 @@ while (terminate == true)
 		    TriId{j} = [;seedTriIndex];
 	    end
 	
-	    for j = 1:labelNum
-	        %need a circle to find seeds for all the potential patch
-		    faceId{j+segNum} = find(label == j);
-	        tmpF = face(:,faceId{j+segNum}); % get the temp Face of a connect Patch num*3
-	        tmpV = vertex(:,unique(tmpF(:,:))); %get the temp Vertex num*3
-	        [hull tmpVolume] = convhulln(tmpV); %get the triangle 3*face ; v is the volume of the convexhull
-	        convCentroids = ConvCentroids (tmpV,hull); %1*3
-			centroid = faceCentroids(vertex,hull);
-		    
-			%init the cost Matrix
-	        costMatrix = inf(length(tmpF),1);
-	        %compute the costMatrix
-	        for i = 1:length(costMatrix)
-	            costMatrix(i) = Cost(tmpF(i,:),tmpV,hull,alpha,tmpVolume,centroid);
-	        end
-	        %find the seed Triangle seedTri is the index
-            seedTriIndex = find(costMatrix == min(costMatrix));%get the indices of tmpF 
-			seedTriIndex = seedTriIndex(1);
-		    seedTriIndex = find(ismember(face,tmpF(seedTriIndex,:),'rows')); %get the indices in face
-	        seedTri = vertex(face(seedTriIndex),:);
-		    %get the seed convexhull
-		    patchVertexId{j} = [face(seedTriIndex,1);face(seedTriIndex,2);face(seedTriIndex,3)];
-			patchVertex{j} = [convCentroids];
-			for i = 1:3
-		        patchVertex{j} = [patchVertex{j};vertex(patchVertexId{j}(i),:)];
-			end
-		    TriId{j} = [;seedTriIndex];
-        end
-	
 	    %step3 grow all the seed into patches
 	
 	    for i = 1:length(patchVertex)
 		    cost = 0;
 		    while(true)
 		        %init patch group and find neighbors
-	            [tmpTriNei tmpNeighbor]= GetNeighborVertex( TriId{i},patchVertexId{i},face,neighbor ); %return the indices
+	            [tmpTriNei tmpNeighbor]= GetNeighborVertex(TriId{i},patchVertexId{i},face,neighbor); %return the indices
 	            tmpCostMatrix = zeros(length(tmpNeighbor),1);
 		        % compute the cost Matrix 
 				% some problems!!!!!!!! update new triangles
 		        for k =1:length(tmpCostMatrix)
-		            [hull tmpVolume] = convhulln([patchVertex{j};vertex(tmpNeighbor(i))]);
-					centroid = faceCentroids([PatchVertex{j};vertex(tmpNeighbor(i))],hull);
-		            tmpCostMatrix(k) = Cost(face(TriId{i},:),patchVertex{i},hull,alpha,tmpVolume,centroid);
+		            [hull tmpVolume] = convhulln([patchVertex{j};vertex(tmpNeighbor(i),:)]);
+					centroid = faceCentroids([PatchVertex{j};vertex(tmpNeighbor(i),:)],hull);
+		            tmpCostMatrix(k) = Cost(face(TriId{i},:),vertex,patchVertex{i}...
+					                   ,hull,hull,alpha,tmpVolume,centroid);
 		        end
 				% some problems!!!!!!!!! update new triangles
 		        cost = min(tmpCostMatrix);
@@ -143,7 +130,7 @@ while (terminate == true)
 	    segInfo(TriId{i}) = i;
 	end		   	
 
-    %to test if we have covered all the patches
+    %to test if we have covered all the patches  
 	if(size(find(segInfo == 0),1) == 0)
 	    terminate = false;
 	end

@@ -1,12 +1,14 @@
-function [label] = CheckConnect(face,seginfo,verbose)
+function [seginfo] = CheckConnect(face,seginfo,neighbor,verbose)
 % CheckConnect check which faces are connected with seginfo=0 (which means unassigned)
-% and return a matrix called label which stores the label of vertex (label(i) stores face(i) belong to which label)
+% and return seginfo 
+% different number of seginfo inform different connected areas
 % Li Yangchun <phantomlyc@gmail.com>
 
 tmp_tic = tic;
 %first find  assigned faces and set their label = 0
-face(:,find(seginfo ~= 0))=0;
-neighbor = getNeighbor(face) ;% c function 3*numFace
+face(find(seginfo ~= 0),:)=0;
+numSeg = length(unique(seginfo(:,:)))-1;
+
 %build the initial Matrix then merge them
 label=zeros(length(neighbor),1);
 for i=1:length(neighbor)
@@ -15,11 +17,11 @@ for i=1:length(neighbor)
     end
 end
 
-stop=true;
+stop = true;
 while stop
     label2 = label;
     for i=1:length(neighbor)
-        index=[i neighbor(1,i) neighbor(2,i) neighbor(3,i)];
+        index=[i neighbor(i,1) neighbor(i,2) neighbor(i,3)];
         index(find(index==0))=[]; %delete 0 element
 	    tmpLabel=label(index);
 	    label(index)=min(tmpLabel); %make all neighbor label to min
@@ -33,7 +35,7 @@ end
 
 Ulabel = unique(label); %find how many parts
  for i=1:length(Ulabel)
-    label(find(label==Ulabel(i)))=i;
+    seginfo(find(label==Ulabel(i)))=i+numSeg;
 end %make parts range from 1 to numParts
 
 if verbose
