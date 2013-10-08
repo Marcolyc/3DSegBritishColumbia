@@ -1,7 +1,7 @@
 function compactness= Comp(hull,vertex,v,centroid)
-%This function calculates a convexHull's compactness
-%input:vertex in 3*num store vertex's cordinates
-%  
+% This function calculates a convexHull's compactness
+% input:vertex in 3*num store vertex's cordinates
+% vertex is vertex which generate the convexhull 
 %output : area(C)/volume(C)^(2/3)                     
 % Li Yangchun <phantomlyc@gmail.com>
 
