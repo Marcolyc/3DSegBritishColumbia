@@ -19,10 +19,10 @@ for j = 1:segNum
 	hull = convhulln(tmpV);
 	patchhull{j} = hull ;
 			
-	convCentroids = ConvCentroids (tmpV,hull);%get the centroid of convexhull
-	centroid = faceCentroids(vertex,hull); 
+	convCentroids = ConvCentroids (tmpV,hull);%get centroid of convexhull
+	centroid = faceCentroids(tmpV,hull); %get centroids of each faces of convexhull
 		    
-	VolumeMatrix = zeros(length(tmpF),1);
+	volumeMatrix = zeros(length(tmpF),1);
 	vertexMatrix = {}; % potential seeds convexhull's vertex 
 	for k = 1:length(tmpF)
 	    vertexMatrix{k} = [vertex(tmpF(k,:),:);convCentroids];
@@ -32,7 +32,7 @@ for j = 1:segNum
 	for k = 1:length(tmpF)
 	    [tmphull tmpVolume] = convhulln(vertexMatrix{k});
 		hullMatrix{k} = tmphull;
-		VolumeMatrix(k) = tmpVolume;
+		volumeMatrix(k) = tmpVolume;
 	end
 			
 	%init the cost Matrix
@@ -40,7 +40,7 @@ for j = 1:segNum
 	%compute the costMatrix
 	for i = 1:length(costMatrix)
 	    costMatrix(i) = Cost(tmpF(i,:),vertex,vertexMatrix{i},tmpV...
-			,hullMatrix{i},hull,alpha,VolumeMatrix(i),centroid);
+			,hullMatrix{i},hull,alpha,volumeMatrix(i),centroid);
 	end
 	%find the seed Triangle seedTri is the index
     seedTriIndex = find(costMatrix == min(costMatrix));%get the indices of tmpF 

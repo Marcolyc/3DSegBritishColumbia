@@ -9,7 +9,7 @@ GetNeighborVertex( TriId,patchId,face,neighbor )
 
 tmp_tic = tic;
 tmpNeighbor = neighbor(TriId,:) ; % Triface k*3 neighbor triangles 
-NeighborTriangle = unique(tmpNeighbor(:,:)); %get rid of the repeat ones but just indices
+NeighborTriangle = setdiff(unique(tmpNeighbor(:,:)),TriId); %get rid of the repeat ones but just indices
 
 tmpNeighborVertex = face(NeighborTriangle,:);
 tmpNeighborVertex = unique(tmpNeighborVertex(:,:));

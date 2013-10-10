@@ -4,7 +4,7 @@
 %
 
 %read a data
-[vertex,face]= read_off('F:\MeshsegBenchmark-1.0\data\off\1.off');
+[vertex,face]= read_off('F:\MeshsegBenchmark-1.0\data\off\200.off'); % It's a hand
 vertex= vertex';
 face = face';
 alpha = 0.07;
@@ -35,17 +35,20 @@ while (terminate == true)
 	while(true)
 	    %step2 finding seeds for connected areas
 	    [patchVertexId patchFaceId patchVertex] = Findseeds(segInfo,face,vertex);
+		
 	
 	    %step3 grow all the seed into patches
 	
 	    for i = 1:length(patchVertex)
-		    cost = 0;
-		    while(true)
+		    terminate2 = true; % used to test stop
+		    while(terminate2)
+			    terminate2 = false;
 		        %init patch group and find neighbors
 	            [faceNeighbor vertexNeighbor]= GetNeighborVertex(patchFaceId{i},patchVertexId{i},face,neighbor); %return the indices
-				faceNeighbor = faceNeighbor(:);
-	            tmpCostMatrix = zeros(length(vertexNeighbor),1);
+				faceNeighbor = faceNeighbor(:); %form a column vector
 				
+				% initial CostMatrix for Neighbors
+	            tmpCostMatrix = zeros(length(vertexNeighbor),1);				
 		        % compute the cost Matrix 
 		        for k =1:length(tmpCostMatrix)
 				    [tmpRow ~] = find(face(faceNeighbor,:) == vertexNeighbor(k));
@@ -53,22 +56,34 @@ while (terminate == true)
 					
 		            [tmphull tmpVolume] = convhulln([patchVertex{i};vertex(vertexNeighbor(k),:)]);
 					centroid = faceCentroids([patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull);
-					% problem accurs
+					
 		            tmpCostMatrix(k) = Cost(face(tmpTriId,:),vertex,[patchVertex{i};vertex(vertexNeighbor(k),:)]...
 					                   ,[patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull,tmphull,alpha,tmpVolume,centroid);
 		        end
+				%costMatrix's indices is correspondance to vertexNeighbor
+				 
 				%find costMatrix's min and compute its error dist
-				sort(tmpCostMatrix);
+				for j = 1:length(tmpCostMatrix)
+				    k=find(tmpCostMatrix == min(tmpCostMatrix)); %get minimum Indices
+				    [tmpRow ~] = find(face(faceNeighbor,:) == vertexNeighbor(k));
+				    tmpTriId = [patchFaceId{i};faceNeighbor(tmpRow,:)];
 				
+				    [tmphull tmpVolume] = convhulln([patchVertex{i};vertex(vertexNeighbor(k),:)]);
+				    centroid = faceCentroids([patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull);
 				
-		        % cost<Dmax then we have to add v to the patch
-		        tmpVertexId = tmpNeighbor(find(costMatrix == cost));
-		        patchVertexId{i} = [patchVertexId;tmpVertexId];
-		        patchVertex{i} = [patchVertex;vertex(tmpVertexId,:)];
-		        %find which rows in Neighbor has this added vertex
-		        [row column] = ...
-		        find(ismember(face(tmpTriNei,:),tmpVertexId) == 1); 
-		        patchFaceId{i} = [patchFaceId{i} ; row];
+				    errorDist = Dist(face(tmpTriId,:),vertex,[patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull,centroid);
+				
+				    if(errorDist < Dmax)
+				        % errorDist<Dmax then we have to add v to the patch
+                        patchFaceId{i} = tmpTriId;
+					    patchVertex{i} = [patchVertex{i};vertex(vertexNeighbor(k),:)];
+					    patchVertexId{i} = [patchVertexId{i};vertexNeighbor(k)];
+						terminate2 = true;
+						break;
+				    else
+				        tmpCostMatrix(k,:) = Dmax;
+				    end
+				end				
 			end
 	    end
 		    % to test convergence

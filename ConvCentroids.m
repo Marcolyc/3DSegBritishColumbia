@@ -4,8 +4,6 @@ function centroids = ConvCentroids (vertex,hull)
 % based on face-area weight average
 tmp_tic = tic;
 
-numV = length(vertex);
-
 A1 = vertex(hull(:,1),:); %n*3
 A2 = vertex(hull(:,2),:);
 A3 = vertex(hull(:,3),:);
@@ -19,7 +17,9 @@ for i=1:length(Area)
     faceCenter(i,:) = faceCenter(i,:)*Area(i);
 end
 
-centroids = mean(faceCenter);
+for i =1:3
+    centroids(i) = sum(faceCenter(:,i))/sum(Area);
+end
 
 tmp_toc = toc(tmp_tic);
 fprintf('Computing Centroids using time: %.2fs\n',tmp_toc);
