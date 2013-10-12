@@ -14,9 +14,11 @@ for i = 1:length(patchVertex)
 	    faceNeighbor = faceNeighbor(:); %form a column vector
 				
 	    % initial CostMatrix for Neighbors
-	    tmpCostMatrix = zeros(length(vertexNeighbor),1);				
+	    tmpCostMatrix = zeros(length(vertexNeighbor),1);		
+		
         % compute the cost Matrix 
 		for k =1:length(tmpCostMatrix)
+		tmpTic = tic;
 		[tmpRow ~] = find(face(faceNeighbor,:) == vertexNeighbor(k));
 	    tmpTriId = [patchFaceId{i};faceNeighbor(tmpRow,:)]; %add triangle belong to this vertex
 					
@@ -25,8 +27,12 @@ for i = 1:length(patchVertex)
 		
 	    tmpCostMatrix(k) = Cost(face(tmpTriId,:),vertex,[patchVertex{i};vertex(vertexNeighbor(k),:)]...
 		                   ,[patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull,tmphull,0.07,tmpVolume,centroid);
+						   
+		tmpToc = toc(tmpTic);
+		fprintf('%d times Cost Matrix: %.5fs\n',k,tmpToc);
         end
 		%costMatrix's indices is correspondance to vertexNeighbor
+
 				 
 		%find costMatrix's min and compute its error dist
 		for j = 1:length(tmpCostMatrix)
@@ -41,7 +47,7 @@ for i = 1:length(patchVertex)
 				
 		    if(errorDist < Dmax)
 	            % errorDist<Dmax then we have to add v to the patch
-				fprintf('Current error Distance is : %.2f \n',errorDist);
+				fprintf('Current error Distance is : %.5f \n',errorDist);
                 patchFaceId{i} = tmpTriId;
 			    patchVertex{i} = [patchVertex{i};vertex(vertexNeighbor(k),:)];
 			    patchVertexId{i} = [patchVertexId{i};vertexNeighbor(k)];
