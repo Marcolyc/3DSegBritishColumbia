@@ -16,7 +16,7 @@ for j = 1:segNum
 	faceId{j} = find(segInfo == j);       %get the patch ID in face
     tmpF = face(find(segInfo == j),:);  %find which faces(3*faces)
     tmpV = vertex(unique(tmpF(:,:)),:); %include which vertices
-	hull = convhulln(tmpV);
+	hull = convhull(tmpV);
 	patchhull{j} = hull ;
 			
 	convCentroids = ConvCentroids (tmpV,hull);%get centroid of convexhull
@@ -30,7 +30,7 @@ for j = 1:segNum
 			
 	hullMatrix = {}; %potential seeds hull
 	for k = 1:length(tmpF)
-	    [tmphull tmpVolume] = convhulln(vertexMatrix{k});
+	    [tmphull tmpVolume] = convhull(vertexMatrix{k});
 		hullMatrix{k} = tmphull;
 		volumeMatrix(k) = tmpVolume;
 	end
