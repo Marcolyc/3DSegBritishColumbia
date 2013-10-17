@@ -8,7 +8,7 @@
 vertex= vertex';
 face = face';
 alpha = 0.07;
-Dmax = 100;
+Dmax = 0.2;
 
 numFace = size(face,1);
 numVertex = size(vertex,1);

@@ -26,13 +26,14 @@ A3 = vertex(face(:,3),:);
 Area = triangleArea3d(A1,A2,A3);
 %compute Normal and centroid to get lines
 normals = normalizeVector3d(faceNormal( vertex,face ));
-center = faceCentroids( vertex,face );
+center = (A1+A2+A3)/3;
 line = createLine3d( center , normals(:,1) , normals(:,2), normals(:,3));
 points = zeros(size(line,1),3);
 faceInds = zeros(size(line,1),1);
 
 %tmp_tic = tic;
-for k = 1:size(line,1)
+tmpT = size(line,1);
+for k = 1:tmpT
     [tmpP pos tmpInds] = intersectLineMesh3d(line(k,:),vertDist,hullDist);
     points(k,:) = tmpP(find(pos>-0.0001),:);
 	faceInds(k,:) = tmpInds(find(pos>-0.0001),:);

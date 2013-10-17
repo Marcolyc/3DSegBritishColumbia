@@ -12,6 +12,7 @@ function [newHull newVolume] = ConvAddVertex(hull,vertex,newV,normals,neighbor,v
 
 % first search the visible faces
 % init the vector Matrix
+tmpTic = tic;
 newV = repmat(newV,length(hull),1);
 v = newV - vertex(hull(:,3),:);
 numV = length(vertex); %num of vertex 
@@ -47,5 +48,8 @@ if(~isempty(visibleFace))
 		end
 	end
 end
+
+tmpToc = toc(tmpTic);
+fprintf('Done Compute New Convex : %.5fs\n',tmpToc);
 	
 
