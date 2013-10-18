@@ -26,20 +26,19 @@ for i = 1:length(patchVertex)
 	    tmpCostMatrix = zeros(length(vertexNeighbor),1);
         tmpLength = length(tmpCostMatrix);		
         % compute the cost Matrix 
-		parfor k =1:tmpLength
+		for k =1:tmpLength
 		[tmpRow ~] = find(face(faceNeighbor,:) == vertexNeighbor(k));
 	    tmpTriId = [patchFaceId{i};faceNeighbor(tmpRow,:)]; %add triangle belong to this vertex
 		
 		% This part is going to be replaced 
 	    [tmphull tmpVolume] = convhull([patchVertex{i};vertex(vertexNeighbor(k),:)]);
-		centroid = faceCentroids([patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull);
 		% And the replacing part is as below
 		%[tmphull tmpVolume] = ConvAddVertex(nowHull,patchVertex{i},vertex(vertexNeighbor(k),:),...
 		%                      nowNormal,hullNeighbor,nowVolume);
 		%centroid = faceCentroids([patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull);		
 	
 	    tmpCostMatrix(k) = Cost(face(tmpTriId,:),vertex,[patchVertex{i};vertex(vertexNeighbor(k),:)]...
-		                   ,[patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull,tmphull,0.07,tmpVolume,centroid);
+		                   ,[patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull,tmphull,0.07,tmpVolume);
 	
         end
 		%costMatrix's indices is correspondance to vertexNeighbor
@@ -57,9 +56,8 @@ for i = 1:length(patchVertex)
 			% Replacing part is as below
 			%[tmphull tmpVolume] = ConvAddVertex(nowHull,patchVertex{i},vertex(vertexNeighbor(k),:),...
 			%					  nowNormal,hullNeighbor,nowVolume);
-			centroid = faceCentroids([patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull);
 			
-		    errorDist = Dist(face(tmpTriId,:),vertex,[patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull,centroid);
+		    errorDist = Dist(face(tmpTriId,:),vertex,[patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull);
 				
 		    if(errorDist < Dmax)
 	            % errorDist<Dmax then we have to add v to the patch

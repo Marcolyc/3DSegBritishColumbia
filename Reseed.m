@@ -1,23 +1,15 @@
-function [patchVertexId patchFaceId patchVertex] = Findseeds(segInfo,face,vertex)
-% This function is the second stage of segment
-% Given the segInfo which gives information of potential patch
-% We find seeds for each potential patch
-% output is patchVertexId{} which stores VertexId in vertex
-%           patchFaceId{} which stores faceId in face
-%           patchVertex{} which stores exact cordinate
-%           Typically patchVertexId is 3*1 patchFaceId is 1*1
-% Li Yangchun    <phantomlyc@gmail.com>
+function [patchVertexId patchFaceId patchVertex] = Reseed(vertex,face,patchVertex,patchFaceId)
+% This is used to get the seed between different iteration
+%
+%
 
-tmp_tic = tic;
-alpha =0.007;
+seedNum = length(patchVertex);
+alpha = 0.007;
 
-segNum = length(unique(segInfo(:,:))); 
-for j = 1:segNum
-	faceId{j} = find(segInfo == j);       %get the patch ID in face
-    tmpF = face(find(segInfo == j),:);  %find which faces(3*faces)
-    tmpV = vertex(unique(tmpF(:,:)),:); %include which vertices
+for j = 1:seedNum   
+    tmpF = face(patchFaceId{j},:);  %find which faces(3*faces)
+    tmpV = patchVertex{j}; %include which vertices
 	hull = convhull(tmpV);
-	patchhull{j} = hull ;
 			
 	convCentroids = ConvCentroids (tmpV,hull);%get centroid of convexhull
 		    
@@ -56,6 +48,4 @@ for j = 1:segNum
 	patchFaceId{j} = [;seedTriIndex];
 
 end
-
-tmp_toc = toc(tmp_tic);
-fprintf('Find seeds: %.2fs\n',tmp_toc);
+    

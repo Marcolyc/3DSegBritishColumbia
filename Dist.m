@@ -1,4 +1,4 @@
-function distance = Dist(face,vertex,hullvertex,hull,centroids) 
+function distance = Dist(face,vertex,hullvertex,hull) 
 % 
 % this function computes metric dist
 % given a group of triangles compute dist(p,C(p)) 
@@ -19,14 +19,12 @@ center = (A1+A2+A3)/3;
 %center = faceCentroids(vertex,face);
 
 line = createLine3d( center , normals(:,1) , normals(:,2), normals(:,3));
-points = zeros(size(line,1),3);
-faceInds = zeros(size(line,1),1);
+distMatrix = zeros(size(line,1),1);
 
 tmpT = size(line,1);
 for k = 1:tmpT
     [tmpP pos tmpInds] = intersectLineMesh3d(line(k,:),hullvertex,hull);
-    points(k,:) = tmpP((pos>-0.0001),:);
-	faceInds(k,:) = tmpInds((pos>-0.0001),:);
+    distMatrix(k,:)= pos((pos>-0.0001),:);
 end
 
 
@@ -36,7 +34,6 @@ box = boundingBox3d(hullvertex);
 diagnol = sqrt((box(2)-box(1))^2+(box(4)-box(3))^2+(box(6)-box(5))^2);
 
 %compute distance
-distMatrix = sqrt(sum((points - centroids(faceInds,:)).^2,2)); 
 distMatrix = distMatrix./diagnol;									   														
 
 distance = sum(distMatrix .* Area)/sum(Area);
