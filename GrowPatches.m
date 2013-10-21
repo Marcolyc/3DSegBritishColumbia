@@ -1,77 +1,120 @@
 function [patchVertexId patchFaceId patchVertex] = ...
-GrowPatches(patchVertexId,patchFaceId,neighbor,patchVertex,vertex,face,Dmax)
+GrowPatches(patchVertexId,patchFaceId,neighbor,patchVertex,vertex,face,Dmax,segInfo)
 % This function is the 3rd step of Segment
 % input: potential seeds: they are all cells
 % output: still patchVertexId patchFaceId patchVertex
 %         but they have more elements
 % still needs to check convergence
 
+faceNeighbor = {};
+vertexNeighbor = {};
 for i = 1:length(patchVertex)
-	terminate2 = true; % used to test stop
-	while(terminate2)
-		terminate2 = false;
-		tmp_tic = tic;
-		%init patch group and find neighbors
-	    [faceNeighbor vertexNeighbor]= GetNeighborVertex(patchFaceId{i},patchVertexId{i},face,neighbor); %return the indices
-	    faceNeighbor = faceNeighbor(:); %form a column vector
+	%init patch group and find neighbors
+	[faceNeighbor{i} vertexNeighbor{i}]= GetNeighborVertex(patchFaceId{i},patchVertexId{i},face,neighbor); %return the indices
+	faceNeighbor{i} = faceNeighbor{i}(:); %form a column vector
+end	
+	
+% Compute the para of current hull
+%[nowHull nowVolume]= convhull(patchVertex{i}); %current patch's hull		
+%nowNormal = faceNormal(patchVertex{i},nowHull); %current hull's normal
+%hullNeighbor = getNeighbor(nowHull');
+%hullNeighbor = hullNeighbor';
+
+CostMatrix = {};
+
+% initial CostMatrix for Neighbors
+for i = 1:length(patchVertex)
+    CostMatrix{i} = inf(size(vertexNeighbor{i},1),1);
+end
+
+minCost = inf(length(vertexNeighbor),1); %store the minimum of each CostMatrix	
+    		
+% compute the cost Matrix 
+for i = 1:length(CostMatrix)
+    TvertexNeighbor = vertexNeighbor{i};
+	TfaceNeighbor = faceNeighbor{i};
+    for j = 1:size(CostMatrix{i},1) 
+	    [tmpRow ~] = find(face(TfaceNeighbor,:) == TvertexNeighbor(j));
+	    tmpTriId = [patchFaceId{i};TfaceNeighbor(tmpRow,:)]; %add triangle belong to this vertex
 		
-		% Compute the para of current hull
-		%[nowHull nowVolume]= convhull(patchVertex{i}); %current patch's hull		
-	    %nowNormal = faceNormal(patchVertex{i},nowHull); %current hull's normal
-		%hullNeighbor = getNeighbor(nowHull');
-		%hullNeighbor = hullNeighbor';
-		
-		
-		% initial CostMatrix for Neighbors
-	    tmpCostMatrix = zeros(length(vertexNeighbor),1);
-        tmpLength = length(tmpCostMatrix);		
-        % compute the cost Matrix 
-		for k =1:tmpLength
-		[tmpRow ~] = find(face(faceNeighbor,:) == vertexNeighbor(k));
-	    tmpTriId = [patchFaceId{i};faceNeighbor(tmpRow,:)]; %add triangle belong to this vertex
-		
-		% This part is going to be replaced 
-	    [tmphull tmpVolume] = convhull([patchVertex{i};vertex(vertexNeighbor(k),:)]);
-		% And the replacing part is as below
+	    [tmphull tmpVolume] = convhull([patchVertex{i};vertex(TvertexNeighbor(j),:)]);
 		%[tmphull tmpVolume] = ConvAddVertex(nowHull,patchVertex{i},vertex(vertexNeighbor(k),:),...
 		%                      nowNormal,hullNeighbor,nowVolume);
 		%centroid = faceCentroids([patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull);		
 	
-	    tmpCostMatrix(k) = Cost(face(tmpTriId,:),vertex,[patchVertex{i};vertex(vertexNeighbor(k),:)]...
-		                   ,[patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull,tmphull,0.07,tmpVolume);
-	
-        end
-		%costMatrix's indices is correspondance to vertexNeighbor
+	    CostMatrix{i}(j) = Cost(face(tmpTriId,:),vertex,[patchVertex{i};vertex(TvertexNeighbor(j),:)]...
+		                   ,[patchVertex{i};vertex(TvertexNeighbor(j),:)],tmphull,tmphull,0.007,tmpVolume);
+    end
+end
+% compute minCost[]
+for i = 1:length(CostMatrix)
+    minCost(i,:) = min(CostMatrix{i});
+end
 
-				 
-		%find costMatrix's min and compute its error dist
-		for j = 1:tmpLength
-		    k = find(tmpCostMatrix == min(tmpCostMatrix)); %get minimum Indices
-		    [tmpRow ~] = find(face(faceNeighbor,:) == vertexNeighbor(k));
-		    tmpTriId = [patchFaceId{i};faceNeighbor(tmpRow,:)];
+% costMatrix's indices is correspondance to vertexNeighbor{i}
+% get minimum and Add vertex into patch
+    
+while(true)	
+	k = find(minCost == min(minCost)); %get minimum Indices in minCost
+	k2 = find(CostMatrix{k} == min(minCost));
+	
+	TvertexNeighbor = vertexNeighbor{k};
+	TfaceNeighbor = faceNeighbor{k};
+	
+	% Compute error Distance
+    [tmpRow ~] = find(face(TfaceNeighbor,:) == TvertexNeighbor(k2));
+    tmpTriId = [patchFaceId{k};TfaceNeighbor(tmpRow,:)];
+						
+    [tmphull tmpVolume] = convhull([patchVertex{k};vertex(TvertexNeighbor(k2),:)]);
+	% Replacing part is as below
+	%[tmphull tmpVolume] = ConvAddVertex(nowHull,patchVertex{i},vertex(vertexNeighbor(k),:),...
+	%					  nowNormal,hullNeighbor,nowVolume);
 			
-            % This part is going to be placed			
-		    [tmphull tmpVolume] = convhull([patchVertex{i};vertex(vertexNeighbor(k),:)]);
-		    centroid = faceCentroids([patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull);
-			% Replacing part is as below
-			%[tmphull tmpVolume] = ConvAddVertex(nowHull,patchVertex{i},vertex(vertexNeighbor(k),:),...
-			%					  nowNormal,hullNeighbor,nowVolume);
-			
-		    errorDist = Dist(face(tmpTriId,:),vertex,[patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull);
+	errorDist = Dist(face(tmpTriId,:),vertex,[patchVertex{k};vertex(TvertexNeighbor(k2),:)],tmphull);
 				
-		    if(errorDist < Dmax)
-	            % errorDist<Dmax then we have to add v to the patch
-				fprintf('Current error Distance is : %.5f \n',errorDist);
-                patchFaceId{i} = tmpTriId;
-			    patchVertex{i} = [patchVertex{i};vertex(vertexNeighbor(k),:)];
-			    patchVertexId{i} = [patchVertexId{i};vertexNeighbor(k)];
-				terminate2 = true;
-				break;
-		    else
-		        tmpCostMatrix(k,:) = Dmax;
-		    end
-		end	
-        tmp_toc = toc(tmp_tic);
-        fprintf('Done Add one Vertex: %.5fs\n',tmp_toc);		
+	if(errorDist < Dmax)
+	    % errorDist<Dmax then we have to add v to the patch
+		fprintf('Current error Distance is : %.5f \n',errorDist);
+        % add vertexNeighbor{k}(k2) into patchVertex{k}
+		patchFaceId{k} = tmpTriId;
+	    patchVertex{k} = [patchVertex{k};vertex(TvertexNeighbor(k2),:)];
+	    patchVertexId{k} = [patchVertexId{k};TvertexNeighbor(k2)];
+		segInfo(TfaceNeighbor(tmpRow,:)) = k;
+		
+		% update vertexNeighbor{k}
+		[faceNeighbor{k} vertexNeighbor{k}]= GetNeighborVertex(patchFaceId{k},patchVertexId{k},face,neighbor); %return the indices
+	    faceNeighbor{k} = faceNeighbor{k}(:); %form a column vector
+	    TvertexNeighbor = vertexNeighbor{k};
+	    TfaceNeighbor = faceNeighbor{k};
+		
+		% update CostMatrix{k}
+		CostMatrix{k} = inf(size(TvertexNeighbor,1),1);
+		for i = 1:size(CostMatrix{k},1) 
+	        [tmpRow ~] = find(face(TfaceNeighbor,:) == TvertexNeighbor(i));
+	        tmpTriId = [patchFaceId{k};TfaceNeighbor(tmpRow,:)]; %add triangle belong to this vertex			
+			
+	        [tmphull tmpVolume] = convhull([patchVertex{k};vertex(TvertexNeighbor(i),:)]);
+		    %[tmphull tmpVolume] = ConvAddVertex(nowHull,patchVertex{i},vertex(vertexNeighbor(k),:),...
+		    %                      nowNormal,hullNeighbor,nowVolume);	
+	
+	        CostMatrix{k}(i) = Cost(face(tmpTriId,:),vertex,[patchVertex{k};vertex(TvertexNeighbor(i),:)]...
+		                       ,[patchVertex{k};vertex(TvertexNeighbor(i),:)],tmphull,tmphull,0.007,tmpVolume);
+        end
+		
+		% update minCost
+		minCost(k,:) = min(CostMatrix{k});
+	else
+        % update costMatrix
+        CostMatrix{k}(k2) = inf;
+        % update minCost
+        minCost(k,:) = min(CostMatrix{k});
+    end
+% check if all neighbors' error is bigger than Dmax
+    if(min(minCost) == inf)
+        break;
+    end		
+% check if all Triangles are included
+    if(isempty(find(segInfo == 0)))
+	    break;
 	end
 end

@@ -1,14 +1,14 @@
-function [patchVertexId patchFaceId patchVertex] = Reseed(vertex,face,patchVertex,patchFaceId)
+function [patchVertexId patchFaceId patchVertex] = Reseed(vertex,face,patchVertexId,patchFaceId)
 % This is used to get the seed between different iteration
 %
 %
 
-seedNum = length(patchVertex);
+seedNum = length(patchVertexId);
 alpha = 0.007;
 
 for j = 1:seedNum   
     tmpF = face(patchFaceId{j},:);  %find which faces(3*faces)
-    tmpV = patchVertex{j}; %include which vertices
+    tmpV = vertex(patchVertexId{j},:); %include which vertices
 	hull = convhull(tmpV);
 			
 	convCentroids = ConvCentroids (tmpV,hull);%get centroid of convexhull

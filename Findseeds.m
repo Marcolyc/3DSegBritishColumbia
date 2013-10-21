@@ -17,25 +17,24 @@ for j = 1:segNum
     tmpF = face(find(segInfo == j),:);  %find which faces(3*faces)
     tmpV = vertex(unique(tmpF(:,:)),:); %include which vertices
 	hull = convhull(tmpV);
-	patchhull{j} = hull ;
 			
 	convCentroids = ConvCentroids (tmpV,hull);%get centroid of convexhull
 		    
 	vertexMatrix = {}; % potential seeds convexhull's vertex 
-	for k = 1:length(tmpF)
+	for k = 1:size(tmpF,1)
 	    vertexMatrix{k} = [vertex(tmpF(k,:),:);convCentroids];
 	end
 	
-	volumeMatrix = zeros(length(tmpF),1);		
+	volumeMatrix = zeros(size(tmpF,1),1);		
 	hullMatrix = {}; % potential seeds hull
-	for k = 1:length(tmpF)
+	for k = 1:size(tmpF,1)
 	    [tmphull tmpVolume] = convhull(vertexMatrix{k});
 		hullMatrix{k} = tmphull;
 		volumeMatrix(k) = tmpVolume;
 	end
 			
 	%init the cost Matrix
-	costMatrix = inf(length(tmpF),1);
+	costMatrix = inf(size(tmpF,1),1);
 	%compute the costMatrix
 	for i = 1:length(costMatrix)
 	    costMatrix(i) = Cost(tmpF(i,:),vertex,vertexMatrix{i},tmpV...

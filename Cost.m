@@ -34,7 +34,12 @@ distMatrix = zeros(size(face,1),1);
 tmpT = size(line,1);
 for k = 1:tmpT
     [tmpP pos tmpInds] = intersectLineMesh3d(line(k,:),vertDist,hullDist);
-    distMatrix(k,:) = pos(find(pos>-0.0001),:);
+    coplane = find(abs(pos-0)<0.0001);
+	if(~isempty(coplane))
+	    distMatrix(k,:) = 0;
+	else
+        distMatrix(k,:)= pos((pos>0.0001),:);
+	end
 end
 %tmp_toc = toc(tmp_tic);
 %fprintf('Done Compute intersect : %.5fs\n',tmp_toc);
