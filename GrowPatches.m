@@ -6,6 +6,7 @@ GrowPatches(patchVertexId,patchFaceId,neighbor,patchVertex,vertex,face,Dmax,segI
 %         but they have more elements
 % still needs to check convergence
 
+faceUsed = []; %to remember which faces are used to avoid repeat
 faceNeighbor = {};
 vertexNeighbor = {};
 for i = 1:length(patchVertex)
@@ -13,6 +14,11 @@ for i = 1:length(patchVertex)
 	[faceNeighbor{i} vertexNeighbor{i}]= GetNeighborVertex(patchFaceId{i},patchVertexId{i},face,neighbor); %return the indices
 	faceNeighbor{i} = faceNeighbor{i}(:); %form a column vector
 end	
+
+% init Used Face
+for i = 1:length(patchVertex)
+    faceUsed = [faceUsed;patchFaceId{i}];
+end
 	
 % Compute the para of current hull
 %[nowHull nowVolume]= convhull(patchVertex{i}); %current patch's hull		
@@ -60,12 +66,20 @@ while(true)
 	
 	TvertexNeighbor = vertexNeighbor{k};
 	TfaceNeighbor = faceNeighbor{k};
-	
-	% Compute error Distance
-    [tmpRow ~] = find(face(TfaceNeighbor,:) == TvertexNeighbor(k2));
-    tmpTriId = [patchFaceId{k};TfaceNeighbor(tmpRow,:)];
-						
-    [tmphull tmpVolume] = convhull([patchVertex{k};vertex(TvertexNeighbor(k2),:)]);
+	% find corresponding faces
+	[tmpRow ~] = find(face(TfaceNeighbor,:) == TvertexNeighbor(k2));
+	% check if in Used face;signUsed is different face indice
+    signUsed = setdiff(TfaceNeighbor(tmpRow,:) , faceUsed);	
+	if(isempty(signUsed))
+	    % update CostMatrix
+	    CostMatrix{k}(k2) = inf;
+        % update minCost
+        minCost(k,:) = min(CostMatrix{k});
+		continue;
+	end
+    % Compute error Distance
+	tmpTriId = [patchFaceId{k};signUsed];
+	[tmphull tmpVolume] = convhull([patchVertex{k};vertex(TvertexNeighbor(k2),:)]);
 	% Replacing part is as below
 	%[tmphull tmpVolume] = ConvAddVertex(nowHull,patchVertex{i},vertex(vertexNeighbor(k),:),...
 	%					  nowNormal,hullNeighbor,nowVolume);
@@ -80,6 +94,9 @@ while(true)
 	    patchVertex{k} = [patchVertex{k};vertex(TvertexNeighbor(k2),:)];
 	    patchVertexId{k} = [patchVertexId{k};TvertexNeighbor(k2)];
 		segInfo(TfaceNeighbor(tmpRow,:)) = k;
+		
+		% update Used face
+		faceUsed = [faceUsed;signUsed];
 		
 		% update vertexNeighbor{k}
 		[faceNeighbor{k} vertexNeighbor{k}]= GetNeighborVertex(patchFaceId{k},patchVertexId{k},face,neighbor); %return the indices
@@ -111,6 +128,7 @@ while(true)
     end
 % check if all neighbors' error is bigger than Dmax
     if(min(minCost) == inf)
+	    fprintf('All neighbor exceeds Dmax \n');
         break;
     end		
 % check if all Triangles are included
