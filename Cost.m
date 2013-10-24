@@ -28,23 +28,9 @@ Area = triangleArea3d(A1,A2,A3);
 normals = normalizeVector3d(faceNormal( vertex,face ));
 center = (A1+A2+A3)/3;
 line = createLine3d( center , normals(:,1) , normals(:,2), normals(:,3));
-distMatrix = zeros(size(face,1),1);
+distMatrix = linesMesh(line, vertDist, hullDist);
 
-%tmp_tic = tic;
-tmpT = size(line,1);
-for k = 1:tmpT
-    [tmpP pos tmpInds] = intersectLineMesh3d(line(k,:),vertDist,hullDist);
-    coplane = find(abs(pos-0)<0.0001);
-	if(~isempty(coplane))
-	    distMatrix(k,:) = 0;
-	else
-        distMatrix(k,:)= pos((pos>0.0001),:);
-	end
-end
-%tmp_toc = toc(tmp_tic);
-%fprintf('Done Compute intersect : %.5fs\n',tmp_toc);
 
-%tmp_tic = tic;
 %compute bounding box
 box = boundingBox3d(vertDist);
 %compute diagnol

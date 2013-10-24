@@ -62,7 +62,9 @@ end
     
 while(true)	
 	k = find(minCost == min(minCost)); %get minimum Indices in minCost
+	k = k(randperm(length(k),1));
 	k2 = find(CostMatrix{k} == min(minCost));
+	k2 = k2(randperm(length(k2),1));
 	
 	TvertexNeighbor = vertexNeighbor{k};
 	TfaceNeighbor = faceNeighbor{k};
@@ -71,11 +73,16 @@ while(true)
 	% check if in Used face;signUsed is different face indice
     signUsed = setdiff(TfaceNeighbor(tmpRow,:) , faceUsed);	
 	if(isempty(signUsed))
+	    fprintf('Faces have been used \n');
 	    % update CostMatrix
 	    CostMatrix{k}(k2) = inf;
         % update minCost
         minCost(k,:) = min(CostMatrix{k});
-		continue;
+		if(min(minCost) == inf)
+            break;
+        else
+		    continue;
+		end
 	end
     % Compute error Distance
 	tmpTriId = [patchFaceId{k};signUsed];
@@ -93,7 +100,7 @@ while(true)
 		patchFaceId{k} = tmpTriId;
 	    patchVertex{k} = [patchVertex{k};vertex(TvertexNeighbor(k2),:)];
 	    patchVertexId{k} = [patchVertexId{k};TvertexNeighbor(k2)];
-		segInfo(TfaceNeighbor(tmpRow,:)) = k;
+		segInfo(signUsed,:) = k;
 		
 		% update Used face
 		faceUsed = [faceUsed;signUsed];
@@ -117,9 +124,12 @@ while(true)
 	        CostMatrix{k}(i) = Cost(face(tmpTriId,:),vertex,[patchVertex{k};vertex(TvertexNeighbor(i),:)]...
 		                       ,[patchVertex{k};vertex(TvertexNeighbor(i),:)],tmphull,tmphull,0.007,tmpVolume);
         end
-		
+		if(length(CostMatrix{k}) == 0)
+		    minCost(k,:) = inf;
+		else
 		% update minCost
-		minCost(k,:) = min(CostMatrix{k});
+		    minCost(k,:) = min(CostMatrix{k});
+		end
 	else
         % update costMatrix
         CostMatrix{k}(k2) = inf;

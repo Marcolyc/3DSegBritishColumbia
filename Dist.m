@@ -19,18 +19,7 @@ center = (A1+A2+A3)/3;
 %center = faceCentroids(vertex,face);
 
 line = createLine3d( center , normals(:,1) , normals(:,2), normals(:,3));
-distMatrix = zeros(size(line,1),1);
-
-tmpT = size(line,1);
-for k = 1:tmpT
-    [tmpP pos tmpInds] = intersectLineMesh3d(line(k,:),hullvertex,hull);
-	coplane = find(abs(pos-0)<0.0001);
-	if(~isempty(coplane))
-	    distMatrix(k,:) = 0;
-	else
-        distMatrix(k,:)= pos((pos>0.0001),:);
-	end
-end
+distMatrix = linesMesh(line, hullvertex, hull);
 
 
 %compute bounding box

@@ -54,8 +54,9 @@ while (terminate == true)
 		convergence = [];
 	    for i =1:length(patchVertex)
 	        diffNum = length(setdiff(patchFaceId{i},patchFaceIdOld{i}));
+			diffNum = diffNum + length(setdiff(patchFaceIdOld{i},patchFaceId{i}));
 		    oldNum = length(patchFaceIdOld{i});
-		    convergence = [;diffNum/oldNum];
+		    convergence = [convergence;diffNum/oldNum];
 	    end
 	    if(all(convergence<0.05))
 	        break;
@@ -66,6 +67,10 @@ while (terminate == true)
 	    end
 		%not convergence we have to Reseed
 		[patchVertexId patchFaceId patchVertex] = Reseed(vertex,face,patchVertexId,patchFaceId);
+		segInfo(:,:) = 0;
+	    for i = 1:length(patchFaceId)
+	        segInfo(patchFaceId{i}) = i;
+	    end
 	end	
 	
 	%step4 
@@ -79,5 +84,7 @@ while (terminate == true)
 	    terminate = false;
 	end
 end
+
+
 
 
