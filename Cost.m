@@ -30,7 +30,6 @@ center = (A1+A2+A3)/3;
 line = createLine3d( center , normals(:,1) , normals(:,2), normals(:,3));
 distMatrix = linesMesh(line, vertDist, hullDist);
 
-
 %compute bounding box
 box = boundingBox3d(vertDist);
 %compute diagnol
