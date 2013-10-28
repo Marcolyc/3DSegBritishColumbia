@@ -1,14 +1,16 @@
 function [patchVertexId patchFaceId patchVertex] = ...
-GrowPatches(patchVertexId,patchFaceId,neighbor,patchVertex,vertex,face,Dmax,segInfo)
+GrowPatches(patchVertexId,patchFaceId,neighbor,patchVertex,vertex,face,Dmax,alpha)
 % This function is the 3rd step of Segment
 % input: potential seeds: they are all cells
 % output: still patchVertexId patchFaceId patchVertex
 %         but they have more elements
 % still needs to check convergence
 
+segInfo = zeros(length(face),1);
 faceUsed = []; %to remember which faces are used to avoid repeat
 faceNeighbor = {};
 vertexNeighbor = {};
+
 for i = 1:length(patchVertex)
 	%init patch group and find neighbors
 	[faceNeighbor{i} vertexNeighbor{i}]= GetNeighborVertex(patchFaceId{i},patchVertexId{i},face,neighbor); %return the indices
@@ -18,16 +20,15 @@ end
 % init Used Face
 for i = 1:length(patchVertex)
     faceUsed = [faceUsed;patchFaceId{i}];
+	segInfo(patchFaceId{i},:) = i;
 end
-	
-% Compute the para of current hull
-%[nowHull nowVolume]= convhull(patchVertex{i}); %current patch's hull		
-%nowNormal = faceNormal(patchVertex{i},nowHull); %current hull's normal
-%hullNeighbor = getNeighbor(nowHull');
-%hullNeighbor = hullNeighbor';
+
+% delete Used face
+for i = 1:length(faceNeighbor)
+    faceNeighbor{i} = setdiff(faceNeighbor{i},faceUsed);
+end
 
 CostMatrix = {};
-
 % initial CostMatrix for Neighbors
 for i = 1:length(patchVertex)
     CostMatrix{i} = inf(size(vertexNeighbor{i},1),1);
@@ -43,13 +44,10 @@ for i = 1:length(CostMatrix)
 	    [tmpRow ~] = find(face(TfaceNeighbor,:) == TvertexNeighbor(j));
 	    tmpTriId = [patchFaceId{i};TfaceNeighbor(tmpRow,:)]; %add triangle belong to this vertex
 		
-	    [tmphull tmpVolume] = convhull([patchVertex{i};vertex(TvertexNeighbor(j),:)]);
-		%[tmphull tmpVolume] = ConvAddVertex(nowHull,patchVertex{i},vertex(vertexNeighbor(k),:),...
-		%                      nowNormal,hullNeighbor,nowVolume);
-		%centroid = faceCentroids([patchVertex{i};vertex(vertexNeighbor(k),:)],tmphull);		
+	    [tmphull tmpVolume] = convhull([patchVertex{i};vertex(TvertexNeighbor(j),:)]);		
 	
 	    CostMatrix{i}(j) = Cost(face(tmpTriId,:),vertex,[patchVertex{i};vertex(TvertexNeighbor(j),:)]...
-		                   ,[patchVertex{i};vertex(TvertexNeighbor(j),:)],tmphull,tmphull,0.007,tmpVolume);
+		                   ,[patchVertex{i};vertex(TvertexNeighbor(j),:)],tmphull,tmphull,alpha,tmpVolume);
     end
 end
 % compute minCost[]
@@ -70,22 +68,9 @@ while(true)
 	TfaceNeighbor = faceNeighbor{k};
 	% find corresponding faces
 	[tmpRow ~] = find(face(TfaceNeighbor,:) == TvertexNeighbor(k2));
-	% check if in Used face;signUsed is different face indice
-    signUsed = setdiff(TfaceNeighbor(tmpRow,:) , faceUsed);	
-	if(isempty(signUsed))
-	    fprintf('Faces have been used \n');
-	    % update CostMatrix
-	    CostMatrix{k}(k2) = inf;
-        % update minCost
-        minCost(k,:) = min(CostMatrix{k});
-		if(min(minCost) == inf)
-            break;
-        else
-		    continue;
-		end
-	end
+	
     % Compute error Distance
-	tmpTriId = [patchFaceId{k};signUsed];
+	tmpTriId = [patchFaceId{k};TfaceNeighbor(tmpRow,:)];
 	[tmphull tmpVolume] = convhull([patchVertex{k};vertex(TvertexNeighbor(k2),:)]);
 	% Replacing part is as below
 	%[tmphull tmpVolume] = ConvAddVertex(nowHull,patchVertex{i},vertex(vertexNeighbor(k),:),...
@@ -100,14 +85,29 @@ while(true)
 		patchFaceId{k} = tmpTriId;
 	    patchVertex{k} = [patchVertex{k};vertex(TvertexNeighbor(k2),:)];
 	    patchVertexId{k} = [patchVertexId{k};TvertexNeighbor(k2)];
-		segInfo(signUsed,:) = k;
-		
-		% update Used face
-		faceUsed = [faceUsed;signUsed];
-		
+		segInfo(tmpTriId,:) = k;
+				% update Used face
+		faceUsed = [faceUsed;TfaceNeighbor(tmpRow,:)];	
+        % find already belong to patches' triangles
+		[nf nv] = GetNeighborVertex(patchFaceId{k},patchVertexId{k},face,neighbor);
+		nf = nf(:);
+		nf = setdiff(nf,faceUsed);
+		% add already belong to patches triangles
+		for nn = 1:length(nf)
+		    tt = face(nf(nn),:);
+			result = setdiff(tt,patchVertexId{k});
+			if(isempty(result))
+			    patchFaceId{k} = [patchFaceId{k};nf(nn)];
+				fprintf('add one Triangle \n');
+				faceUsed = [faceUsed;nf(nn)];
+				segInfo(nf(nn)) = k;
+			end
+		end
+		%%%%%% very important		
 		% update vertexNeighbor{k}
-		[faceNeighbor{k} vertexNeighbor{k}]= GetNeighborVertex(patchFaceId{k},patchVertexId{k},face,neighbor); %return the indices
+		[faceNeighbor{k} vertexNeighbor{k}] = GetNeighborVertex(patchFaceId{k},patchVertexId{k},face,neighbor); %return the indices
 	    faceNeighbor{k} = faceNeighbor{k}(:); %form a column vector
+		faceNeighbor{k} = setdiff(faceNeighbor{k},faceUsed);
 	    TvertexNeighbor = vertexNeighbor{k};
 	    TfaceNeighbor = faceNeighbor{k};
 		
@@ -122,7 +122,7 @@ while(true)
 		    %                      nowNormal,hullNeighbor,nowVolume);	
 	
 	        CostMatrix{k}(i) = Cost(face(tmpTriId,:),vertex,[patchVertex{k};vertex(TvertexNeighbor(i),:)]...
-		                       ,[patchVertex{k};vertex(TvertexNeighbor(i),:)],tmphull,tmphull,0.007,tmpVolume);
+		                       ,[patchVertex{k};vertex(TvertexNeighbor(i),:)],tmphull,tmphull,alpha,tmpVolume);
         end
 		if(length(CostMatrix{k}) == 0)
 		    minCost(k,:) = inf;
@@ -143,6 +143,7 @@ while(true)
     end		
 % check if all Triangles are included
     if(isempty(find(segInfo == 0)))
+	    fprintf('All triangles being assigned\n');
 	    break;
 	end
 end
