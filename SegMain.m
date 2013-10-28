@@ -8,7 +8,7 @@
 vertex= vertex';
 face = face';
 alpha = 0.007;
-Dmax = 0.013;
+Dmax = 0.015;
 
 numFace = size(face,1);
 numVertex = size(vertex,1);
@@ -31,7 +31,7 @@ while (terminate == true)
     segInfo = CheckConnect(face,segInfo,1);
 	
 	% step2 find initial seeds
-	[patchVertexId patchFaceId patchVertex] = Findseeds(segInfo,face,vertex,alpha);
+	[patchVertexId patchFaceId patchVertex] = Findseeds(segInfo,face,vertex);
 	
 	% unassigned triangles
 	segInfo(:,:) = 0;
@@ -49,7 +49,7 @@ while (terminate == true)
 		
 	    %step3 grow all the seed into patches	
 		[patchVertexId patchFaceId patchVertex] = ...
-        GrowPatches(patchVertexId,patchFaceId,neighbor,patchVertex,vertex,face,Dmax,alpha);
+        GrowPatches(patchVertexId,patchFaceId,neighbor,patchVertex,vertex,face,Dmax,segInfo);
 		% to test convergence
 		convergence = [];
 	    for i =1:length(patchVertex)
@@ -66,11 +66,11 @@ while (terminate == true)
 		    patchFaceIdOld{i} = patchFaceId{i};
 	    end
 		%not convergence we have to Reseed
-		[patchVertexId patchFaceId patchVertex] = Reseed(vertex,face,patchVertexId,patchFaceId,alpha);
+		[patchVertexId patchFaceId patchVertex] = Reseed(vertex,face,patchVertexId,patchFaceId);
 		segInfo(:,:) = 0;
 	    for i = 1:length(patchFaceId)
 	        segInfo(patchFaceId{i}) = i;
-	    end	
+	    end
 	end	
 	
 	%step4 

@@ -1,9 +1,10 @@
-function [patchVertexId patchFaceId patchVertex] = Reseed(vertex,face,patchVertexId,patchFaceId,alpha)
+function [patchVertexId patchFaceId patchVertex] = Reseed(vertex,face,patchVertexId,patchFaceId)
 % This is used to get the seed between different iteration
 %
 %
 
 seedNum = length(patchVertexId);
+alpha = 0.007;
 
 for j = 1:seedNum   
     tmpF = face(patchFaceId{j},:);  %find which faces(3*faces)

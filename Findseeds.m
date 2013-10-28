@@ -1,4 +1,4 @@
-function [patchVertexId patchFaceId patchVertex] = Findseeds(segInfo,face,vertex,alpha)
+function [patchVertexId patchFaceId patchVertex] = Findseeds(segInfo,face,vertex)
 % This function is the second stage of segment
 % Given the segInfo which gives information of potential patch
 % We find seeds for each potential patch
@@ -8,8 +8,8 @@ function [patchVertexId patchFaceId patchVertex] = Findseeds(segInfo,face,vertex
 %           Typically patchVertexId is 3*1 patchFaceId is 1*1
 % Li Yangchun    <phantomlyc@gmail.com>
 
-
 tmp_tic = tic;
+alpha =0.007;
 
 segNum = length(unique(segInfo(:,:))); 
 for j = 1:segNum
